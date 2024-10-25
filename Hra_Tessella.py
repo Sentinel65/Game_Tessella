@@ -3,24 +3,89 @@
 # Vytvoreno s velkou pomoci ChatGPT 4 (chatgpt.com)
 
 # Moznost zapnuti / vypnuti logovani a vypisu hlasek pro ucely testovani a zjistovani funkcnosti programu. na zacatek radku vlozte / smazte tento znak:   #
-# Radek [279] Smer pohybu:
-# Radek [280] Relevantni primka obsahuje tyto pozice:
-# Radek [284] Figurky na primce:
-# Radek [288] Vase figurky v primce:
-# Radek [299] Podporujici figurky ve smeru {smer}:
-# Radek [91] - [106] zde lze pro ucely testovani konkretnich situaci ve hre nastavit rozestaveni figurek podle potreby
+# Radek [350] Smer pohybu:
+# Radek [351] Relevantni primka obsahuje tyto pozice:
+# Radek [355] Figurky na primce:
+# Radek [359] Vase figurky v primce:
+# Radek [370] Podporujici figurky ve smeru {smer}:
+# Radek [163] - [177] zde lze pro ucely testovani konkretnich situaci ve hre nastavit rozestaveni figurek podle potreby
 
-
+import re
 class Game:
     def __init__(self):
         # Inicializace herni desky
+        self.board_choice = None  # Inicializace atributu board_choice  
         self.board = [[' ' for _ in range(9)] for _ in range(9)]
-        self.initialize_board()
+        self.initialize_board(self.board_choice)
         self.current_player = 'W'  # W pro bileho hrace, B pro cerneho hrace
         self.pieces_remaining = {'W': 7, 'B': 7}  # Zbyle figurky pro kazdeho hrace
         self.move_log = []  # Logovani tahu
 
-    def initialize_board(self):
+    import re
+
+    def load_game(self):
+        """Nacte souradnice figurek ze souboru a nahraje je na desku."""
+        try:
+            with open("tessella_save.txt", "r") as f:
+                # Nacist typ hraci desky z prvniho radku
+                self.board_choice = int(f.readline().strip())
+                print(f"Nacteny typ desky: {self.board_choice}")
+                
+                # Inicializuj desku podle nacteneho typu
+                if self.board_choice == '1':
+                    self.initialize_board(self.board_choice)
+                    self.setup_standard_board()
+                elif self.board_choice == '2':    
+                    self.initialize_board(self.board_choice)
+                    self.setup_alternative_board() 
+                    
+                # Regular expression pro extrakci souradnic a hodnoty z radku
+                pattern = re.compile(r"self\.board\[(\d+)\]\[(\d+)\] = '([BW.o])'")
+                
+                # Postupne nacitani jednotlivych pozic
+                for line in f:
+                    match = pattern.match(line.strip())
+                    if match:
+                        x, y, value = int(match.group(1)), int(match.group(2)), match.group(3)
+                        self.board[x][y] = value
+#                        print(f"Nastavuji pozici ({x}, {y}) na hodnotu '{value}'")
+                    else:
+                        print(f"Chyba pri nacitani radku: {line.strip()} - neplatny format")
+    
+                print("Hra byla uspesne nactena.")
+        except IOError:
+            print("Chyba pri nacitani hry nebo soubor nenalezen.")
+        except ValueError:
+            print("Chyba pri nacitani typu desky ze souboru. Zkontrolujte format souboru.")
+        except Exception as e:
+            print(f"Nastala neocekavana chyba: {e}")
+    
+    def save_game(self):
+        """Ulozi hru do souboru s pouze relevantnimi souradnicemi."""
+        with open("tessella_save.txt", "w") as f:
+            # Ulozeni typu hraci desky
+            print(f"Ukladam board_choice: {self.board_choice}")  # Debugging
+            f.write(f"{self.board_choice}\n")
+            
+            # Definovani osmiuhelniku a ctvercu pro ukladani
+            osmiuhelniky = [(0, 0), (0, 2), (0, 4), (0, 6), (0, 8),
+                            (2, 0), (2, 2), (2, 4), (2, 6), (2, 8),
+                            (4, 0), (4, 2), (4, 4), (4, 6), (4, 8),
+                            (6, 0), (6, 2), (6, 4), (6, 6), (6, 8),
+                            (8, 0), (8, 2), (8, 4), (8, 6), (8, 8)]
+    
+            ctverce = [(1, 1), (1, 3), (1, 5), (1, 7),
+                       (3, 1), (3, 3), (3, 5), (3, 7),
+                       (5, 1), (5, 3), (5, 5), (5, 7),
+                       (7, 1), (7, 3), (7, 5), (7, 7)]
+    
+            # Ukladani pouze definovanych souradnic
+            for x, y in osmiuhelniky + ctverce:
+                f.write(f"self.board[{x}][{y}] = '{self.board[x][y]}'\n")
+        
+        print("Hra byla uspesne ulozena.")
+
+    def initialize_board(self, board_choice):
         # Definujeme osmiuhelniky (o) a ctverce (.):
         osmiuhelniky = [(0, 0), (0, 2), (0, 4), (0, 6), (0, 8),
                         (2, 0), (2, 2), (2, 4), (2, 6), (2, 8),
@@ -37,22 +102,28 @@ class Game:
             self.board[x][y] = 'o'
         for (x, y) in ctverce:
             self.board[x][y] = '.'
-        
+
         print("Hra Tessella\n")
         choice = input("Vyberte rozlozeni hraci desky:\nzadejte '1' pro standardni, '2' pro alternativni, '3' pro testovaci: ")
         if choice == '1':
+            self.board_choice = 1
+            print(f"Nacteny typ desky: {self.board_choice}")
+#            self.initialize_board(self.board_choice)  # Inicializace desky
             self.setup_standard_board()
         elif choice == '2':
+            self.board_choice = 2
+            print(f"Nacteny typ desky: {self.board_choice}")
+#           self.initialize_board(self.board_choice)  # Inicializace desky
             self.setup_alternative_board()
         elif choice == '3':
+            self.board_choice = 3
+            print(f"Nacteny typ desky: {self.board_choice}")
+#           self.initialize_board(self.board_choice)  # Inicializace desky    
             self.setup_test_board()
-        elif choice == '4':
-            self.setup_testa_board()
-        elif choice == '5':
-            self.setup_testb_board()    
         else:
             print("Neplatna volba, nastavuje se standardni rozlozeni.")
             self.setup_standard_board()
+
 
     def setup_standard_board(self):
         self.board[0][0] = 'B'
@@ -381,7 +452,7 @@ class Game:
         while True:
             self.print_board()
             try:
-                move_type = input(f"Hrac {self.current_player}, zadejte 'p' pro pohyb nebo 'v' pro vyhozeni,\n'h' pro napovedu, 'k' pro konec hry: ")
+                move_type = input(f"Hrac {self.current_player}, zadejte 'p' pro pohyb nebo 'v' pro vyhozeni, 'h' pro napovedu,,\n's' pro ulozeni hry, 'l' pro nacteni hry, 'k' pro konec hry: ")
                 if move_type == 'p':
                     x1, y1, x2, y2 = map(int, input("Zadejte souradnice jako 'x1 y1 x2 y2': ").split())
                     self.make_move(x1, y1, x2, y2)
@@ -395,6 +466,11 @@ class Game:
                         if help_choice == 'k':
                             print("Hra ukoncena.")
                             break
+                elif move_type == 's':
+                    self.save_game()
+                elif move_type == 'l':
+                # Spravne prirazeni volby pro nacteni desky
+                    self.load_game()
                 elif move_type == 'k':
                         print("Hra ukoncena.")
                         break
@@ -406,3 +482,6 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     game.play()
+
+
+
