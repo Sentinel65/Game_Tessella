@@ -488,7 +488,7 @@ class Game:
                 else:
                     print("Neplatny vstup. Prosim, zkuste to znovu.")
             except ValueError:
-                print("Neplatny vstup. Ujistete se, ze zadavate cisla.")
+                print("Neplatny vstup! Ujistete se, ze zadavate cisla vychozi a cilove\nsouradnice ve formatu napr. 1 2 3 4 viz. napoveda 'h'.")
 
 if __name__ == "__main__":
     game = Game()
