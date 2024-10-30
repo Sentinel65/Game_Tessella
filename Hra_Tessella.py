@@ -20,6 +20,16 @@ class Game:
         self.current_player = 'W'  # W pro bileho hrace, B pro cerneho hrace
         self.pieces_remaining = {'W': 7, 'B': 7}  # Zbyle figurky pro kazdeho hrace
         self.move_log = []  # Logovani tahu
+        self.osmiuhelniky = [(0, 0), (0, 2), (0, 4), (0, 6), (0, 8),
+                             (2, 0), (2, 2), (2, 4), (2, 6), (2, 8),
+                             (4, 0), (4, 2), (4, 4), (4, 6), (4, 8),
+                             (6, 0), (6, 2), (6, 4), (6, 6), (6, 8),
+                             (8, 0), (8, 2), (8, 4), (8, 6), (8, 8)]
+
+        self.ctverce = [(1, 1), (1, 3), (1, 5), (1, 7),
+                        (3, 1), (3, 3), (3, 5), (3, 7),
+                        (5, 1), (5, 3), (5, 5), (5, 7),
+                        (7, 1), (7, 3), (7, 5), (7, 7)]
 
     import re
     
@@ -389,7 +399,7 @@ class Game:
                 return False
     
         # Pokud jsou splneny vsechny podminky, je tah platny
-        print(f"Vyhazujete platne figurku {x2},{y2} s figurkou {x1},{y1}.")
+        print(f"Platne vyhozeni figurky {x2},{y2} s figurkou {x1},{y1}.")
         return True
 
 
@@ -408,8 +418,11 @@ class Game:
         if self.is_valid_move(x1, y1, x2, y2):
             # Aktualizace hraci desky
             self.board[x2][y2] = self.board[x1][y1]  # Umisteni figurky na cilove pole
-            self.board[x1][y1] = 'o' if (x1+y1) % 2 == 0 else '.'  # Puvodni pole se stava osmiuhelnikem nebo ctvercem
-
+            if (x1, y1) in self.osmiuhelniky:  # Pokud bylo puvodni pole osmiuhelnik
+                self.board[x1][y1] = 'o'
+            elif (x1, y1) in self.ctverce:  # Pokud bylo puvodni pole ctverec
+                self.board[x1][y1] = '.'
+            
             # Snizeni poctu zbyvajicich figurek
             self.count_pieces()
             self.log_move("pohyb", x1, y1, x2, y2)  # Log pohybu
@@ -425,12 +438,16 @@ class Game:
         if self.is_valid_capture(x1, y1, x2, y2):
             # Predpokladame, ze x1, y1 je blize k x2, y2 a provede se vyhazovani
             self.board[x2][y2] = self.board[x1][y1]  # Premistime figurku
-            self.board[x1][y1] = 'o' if (x1+y1) % 2 == 0 else '.'  # Puvodni pole se stava osmiuhelnikem nebo ctvercem
+            if (x1, y1) in self.osmiuhelniky:  # Pokud bylo puvodni pole osmiuhelnik
+                self.board[x1][y1] = 'o'
+            elif (x1, y1) in self.ctverce:  # Pokud bylo puvodni pole ctverec
+                self.board[x1][y1] = '.'
             self.count_pieces()
             self.log_move("vyhozeni", x1, y1, x2, y2)  # Log vyhozeni
-            self.check_game_over()  # Zkontrolovat, zda hra skoncila
+#            self.check_game_over()  # Zkontrolovat, zda hra skoncila
             print(f"Vyhozeni uspesne: Z {x1},{y1} na {x2},{y2}.")
             print(f"Zbyvajici figurky - Hrac W: {self.pieces_remaining['W']}, Hrac B: {self.pieces_remaining['B']}.")
+            self.check_game_over()  # Zkontrolovat, zda hra skoncila
             self.current_player = 'B' if self.current_player == 'W' else 'W'
         else:
             print(f"Vyhozeni neni platne: Z {x1},{y1} na {x2},{y2}.")
@@ -438,8 +455,9 @@ class Game:
     def check_game_over(self):
         if self.pieces_remaining['W'] < 4 or self.pieces_remaining['B'] < 4:    # Kontrola na 4 vyhozene figurky
 #            self.pieces_remaining['B'] < 4:  # Kontrola na 4 vyhozene figurky cerneho
-            self.print_move_log()  # Vypis logovani tahu pred ukoncenim hry
             print(f"Hrac {self.current_player} vyhral, souperi zustaly pouze 3 figurky! Hra konci.")
+            self.print_board()
+            self.print_move_log()  # Vypis logovani tahu pred ukoncenim hry
             self.play_again()   # Dotaz na dalsi hru
             exit()
     
@@ -486,7 +504,7 @@ class Game:
                         print("Hra ukoncena.")
                         break
                 else:
-                    print("Neplatny vstup. Prosim, zkuste to znovu.")
+                    print("Neplatny vstup. Zadejte pouze 'p', 'v', 'h', 's', 'l' nebo 'k'.")
             except ValueError:
                 print("Neplatny vstup! Ujistete se, ze zadavate cisla vychozi a cilove\nsouradnice ve formatu napr. 1 2 3 4 viz. napoveda 'h'.")
 
